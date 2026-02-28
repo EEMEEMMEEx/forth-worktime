@@ -12,7 +12,7 @@ export async function analyzePdf(file: File, lang: 'en' | 'th' = 'th'): Promise<
     const pdfJS = await import('pdfjs-dist');
     // Handle different export structures (default vs named)
     const pdfLib = pdfJS.default || pdfJS;
-    const { getDocument, GlobalWorkerOptions, version } = pdfLib;
+    const { getDocument, GlobalWorkerOptions } = pdfLib;
 
     if (typeof window !== 'undefined' && GlobalWorkerOptions) {
         GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
