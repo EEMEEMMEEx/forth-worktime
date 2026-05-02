@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⏱️ Forth WorkTime Analyzer
 
-## Getting Started
+A premium, high-performance web application designed for analyzing and summarizing monthly work hours and OT reports from PDF exports.
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **🚀 Advanced PDF Parsing**: Automatically extracts and normalizes daily clock-in/out segments.
+- **📊 Analytics Dashboard**: Real-time KPI visualization for average hours, max work days, and total count.
+- **🌓 Premium Dark Mode**: Sophisticated glassmorphic UI with dynamic theme switching.
+- **📱 Fully Responsive**: Optimized for desktop, tablet, and mobile (PWA ready).
+- **☁️ Cloud Sync**: Anonymous authentication with Firestore persistence for your OT settings.
+- **📑 Professional Exports**: High-fidelity Excel export and print-ready reports.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **State Management**: [Zustand](https://docs.pmnd.rs/zustand/)
+- **Database/Auth**: [Firebase](https://firebase.google.com/) (Firestore & Auth)
+- **Charts**: [Chart.js](https://www.chartjs.org/)
+- **PWA**: [@ducanh2912/next-pwa](https://www.npmjs.com/package/@ducanh2912/next-pwa)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Getting Started
 
-## Learn More
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Configure Environment**:
+   Create a `.env.local` file with your Firebase configuration:
+   ```env
+   NEXT_PUBLIC_FIREBASE_API_KEY=...
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+   NEXT_PUBLIC_FIREBASE_APP_ID=...
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Build for Production**:
+   ```bash
+   npm run build
+   ```
 
-## Deploy on Vercel
+## 📚 Knowledge Base
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Detailed documentation and architectural decisions are maintained in the [Wiki](./wiki/index.md).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+© 2025 WorkTime Analyzer. All rights reserved.

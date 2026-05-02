@@ -34,3 +34,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch and test files
+scratch*
+test*
+*.pdf
+*.xlsx
+output*
+*.json
+!package.json
+!tsconfig.json
+!next.config.js
+!next.config.mjs
+!package-lock.json
+!wiki/**/*.json

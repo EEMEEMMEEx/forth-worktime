@@ -10,7 +10,7 @@ export const dictionaries = {
         otSummaryTitle: "OT Summary (Hours)",
         payCalcTitle: "OT Pay Calculation",
         monthlySalaryLabel: "Monthly Salary (THB/Month)",
-        baseHoursLabel: "Base Hours per Month (e.g., 26×8)",
+        baseHoursLabel: "Base Hours per Month (30×8)",
         effectiveRateLabel: "Effective Hourly Rate",
         otPayoutTitle: "OT Payout Summary (THB)",
         totalOtPayLabel: "Total OT Pay:",
@@ -25,7 +25,13 @@ export const dictionaries = {
         statusWeekend: "Weekend",
         statusHoliday: "Holiday",
         printButton: "Print Report",
-        exportButton: "Export Excel"
+        exportButton: "Export Excel",
+        tableSummary: "Total Summary",
+        statsTotalDays: "Work Days",
+        statsAvgHours: "Avg Hours/Day",
+        statsMaxHours: "Max Work Day",
+        statsTotalHours: "Total Net Hours",
+        tableHeader: "Detailed Work Logs"
     },
     th: {
         appTitle: "WorkTime Analyzer",
@@ -38,7 +44,7 @@ export const dictionaries = {
         otSummaryTitle: "สรุป OT (หน่วย: ชั่วโมง)",
         payCalcTitle: "คำนวณค่าแรง OT",
         monthlySalaryLabel: "เงินเดือน (บาท/เดือน)",
-        baseHoursLabel: "ชั่วโมงฐานต่อเดือน (เช่น 26×8)",
+        baseHoursLabel: "ชั่วโมงฐานต่อเดือน (30×8)",
         effectiveRateLabel: "ค่าแรงต่อชั่วโมงที่ใช้คำนวณ",
         otPayoutTitle: "สรุปค่าแรง OT (บาท)",
         totalOtPayLabel: "รวมค่าแรง OT ทั้งหมด:",
@@ -53,7 +59,13 @@ export const dictionaries = {
         statusWeekend: "วันหยุดสุดสัปดาห์",
         statusHoliday: "วันหยุดนักขัตฤกษ์",
         printButton: "พิมพ์รายงาน",
-        exportButton: "ส่งออก Excel"
+        exportButton: "ส่งออก Excel",
+        tableSummary: "สรุปยอดรวม",
+        statsTotalDays: "จำนวนวันทำงาน",
+        statsAvgHours: "เฉลี่ย ชม./วัน",
+        statsMaxHours: "วันทำงานสูงสุด",
+        statsTotalHours: "ชม. ทำงานรวม",
+        tableHeader: "บันทึกเวลาทำงาน"
     }
 };
 

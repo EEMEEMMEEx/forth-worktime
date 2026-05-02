@@ -6,19 +6,21 @@ import FileUploader from '@/components/FileUploader';
 import WorkTable from '@/components/WorkTable';
 import { OtSummary, PayCalculator } from '@/components/Summary';
 import WorkChart from '@/components/Chart';
+import StatsGrid from '@/components/StatsGrid';
 import { Card } from '@/components/ui/Primitive';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Home() {
   const { lang, data, monthIdx, year } = useStore();
   const dict = dictionaries[lang];
 
   return (
-    <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6 min-h-screen pb-12">
+    <main className="max-w-7xl mx-auto p-4 md:p-10 space-y-10 min-h-screen pb-20 selection:bg-indigo-100 selection:text-indigo-900 dark:selection:bg-indigo-500/30 dark:selection:text-indigo-200 transition-colors duration-500">
       {/* Print Header */}
-      <div className="hidden print:block border-b border-slate-200 pb-2 mb-4">
+      <div className="hidden print:block border-b border-slate-200 dark:border-slate-700 pb-4 mb-8">
         <div className="flex justify-between items-center">
-          <h1 className="text-lg font-bold">WorkTime Analyzer - Monthly Report</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">WorkTime Analyzer - Monthly Report</h1>
+          <p className="text-sm text-slate-500 font-medium">
             {new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeStyle: 'short' }).format(new Date())}
           </p>
         </div>
@@ -26,44 +28,80 @@ export default function Home() {
 
       <Header />
 
-      <FileUploader />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6 }}
+      >
+        <FileUploader />
+      </motion.div>
 
-      {data.length > 0 && (
-        <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <AnimatePresence mode="wait">
+        {data.length > 0 && (
+          <motion.section 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+          >
+            {/* Analytics Dashboard */}
+            <StatsGrid />
 
-          {/* Report Summary Card */}
-          <Card className="print-section">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <div className="text-sm text-slate-500">{dict.reportMonthHeader}</div>
-                <div className="text-xl font-semibold">
-                  {monthIdx !== null && year ? new Intl.DateTimeFormat(lang === 'th' ? 'th-TH' : 'en-US', { month: 'long', year: 'numeric' }).format(new Date(year, monthIdx)) : '–'}
+            {/* Bento Grid Container */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 auto-rows-auto">
+              
+              {/* Report Month & Total Hours - Main Big Card */}
+              <Card className="lg:col-span-8 flex flex-col justify-center min-h-[160px] relative overflow-hidden group">
+                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-500/5 dark:bg-indigo-400/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 dark:group-hover:bg-indigo-400/10 transition-colors duration-500" />
+                <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-fuchsia-500/5 dark:bg-fuchsia-400/5 rounded-full blur-3xl group-hover:bg-fuchsia-500/10 dark:group-hover:bg-fuchsia-400/10 transition-colors duration-500" />
+                
+                <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-2">{dict.reportMonthHeader}</div>
+                    <div className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+                      {monthIdx !== null && year ? new Intl.DateTimeFormat(lang === 'th' ? 'th-TH' : 'en-US', { month: 'long', year: 'numeric' }).format(new Date(year, monthIdx)) : '—'}
+                    </div>
+                  </div>
+                  <div className="md:text-right bg-white/40 dark:bg-slate-900/40 p-6 rounded-3xl border border-white/40 dark:border-slate-700/50 shadow-sm backdrop-blur-sm">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">{dict.totalNetHoursHeader}</div>
+                    <div className="text-4xl md:text-5xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter">
+                      {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(data.reduce((sum, d) => sum + d.netHours, 0))}
+                      <span className="text-xl font-bold text-slate-400 dark:text-slate-500 ml-2">hrs</span>
+                    </div>
+                  </div>
                 </div>
+              </Card>
+
+              {/* OT Summary Grid - Smaller Cards in Bento */}
+              <div className="lg:col-span-4 h-full">
+                <OtSummary />
               </div>
-              <div className="text-left sm:text-right">
-                <div className="text-sm text-slate-500">{dict.totalNetHoursHeader}</div>
-                <div className="text-3xl font-bold text-indigo-600">
-                  {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(data.reduce((sum, d) => sum + d.netHours, 0))}
-                  <span className="text-lg font-medium text-slate-600 ml-1">Hrs</span>
-                </div>
+
+              {/* Pay Calculator - Large Side Card */}
+              <div className="lg:col-span-7">
+                <PayCalculator />
               </div>
+
+              {/* Summary Chart - Complementary Card */}
+              <div className="lg:col-span-5 h-full">
+                <WorkChart />
+              </div>
+
+              {/* Full Width Table */}
+              <div className="lg:col-span-12 mt-4">
+                <WorkTable />
+              </div>
+
             </div>
-          </Card>
+          </motion.section>
+        )}
+      </AnimatePresence>
 
-          <OtSummary />
-
-          <PayCalculator />
-
-          <WorkTable />
-
-          <WorkChart />
-
-        </section>
-      )}
-
-      <footer className="text-center text-xs text-slate-400 mt-12 no-print">
-        <p>{dict.footerText}</p>
-        <p className="mt-1 opacity-60">Powered by Next.js & Firebase</p>
+      <footer className="text-center text-xs font-medium text-slate-400 dark:text-slate-500 mt-20 no-print pb-10 transition-colors duration-500">
+        <p className="tracking-wide">{dict.footerText}</p>
+        <p className="mt-2 opacity-50 flex items-center justify-center gap-1">
+          Designed for Productivity <span className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" /> Powered by Next.js & Firebase
+        </p>
       </footer>
     </main>
   );

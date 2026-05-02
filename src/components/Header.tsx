@@ -2,11 +2,12 @@
 import { useStore } from '@/lib/store';
 import { dictionaries } from '@/lib/dictionaries';
 import { Button } from './ui/Primitive';
-import { Printer } from 'lucide-react';
+import { Printer, Cloud, CloudOff, RefreshCw } from 'lucide-react';
 import ExportButton from './ExportButton';
+import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
-    const { lang, setLang, data, busy } = useStore();
+    const { lang, setLang, data, busy, syncing, uid } = useStore();
     const dict = dictionaries[lang];
 
     const handlePrint = () => {
@@ -14,13 +15,26 @@ export default function Header() {
     };
 
     return (
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print mb-6">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-800">{dict.appTitle}</h1>
-                <p className="text-slate-500 mt-1">{dict.appSubtitle}</p>
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 no-print mb-10">
+            <div className="w-full sm:w-auto">
+                <div className="flex items-center justify-between sm:justify-start gap-4">
+                    <h1 className="text-3xl md:text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{dict.appTitle}</h1>
+                    {data.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/50 dark:bg-slate-800/50 border border-white/20 dark:border-slate-700/50 text-slate-400 backdrop-blur-sm">
+                            {!uid ? (
+                                <><CloudOff className="w-3 h-3 text-rose-500" /> <span className="hidden xs:inline">Offline</span></>
+                            ) : syncing ? (
+                                <><RefreshCw className="w-3 h-3 animate-spin text-indigo-500" /> <span className="hidden xs:inline">Syncing</span></>
+                            ) : (
+                                <><Cloud className="w-3 h-3 text-emerald-500" /> <span className="hidden xs:inline">Synced</span></>
+                            )}
+                        </div>
+                    )}
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">{dict.appSubtitle}</p>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row items-end sm:items-center gap-3">
+            <div className="flex flex-row-reverse sm:flex-row items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
                 {/* Actions (Only visible if data loaded) */}
                 {!busy && data.length > 0 && (
                     <div className="flex gap-2">
@@ -32,19 +46,15 @@ export default function Header() {
                     </div>
                 )}
 
-                {/* Language Switcher */}
-                <div className="flex items-center space-x-2 bg-white/50 p-1 rounded-lg border border-slate-200">
+                {/* Language & Theme Switcher */}
+                <div className="flex items-center gap-2 bg-white/40 dark:bg-slate-800/40 p-1 rounded-2xl border border-white/20 dark:border-slate-700/50 backdrop-blur-sm">
+                    <ThemeToggle />
+                    
                     <button
-                        onClick={() => setLang('th')}
-                        className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${lang === 'th' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                        onClick={() => setLang(lang === 'en' ? 'th' : 'en')}
+                        className="px-4 py-2 rounded-xl text-xs font-black hover:bg-white/60 dark:hover:bg-slate-700/60 transition-all text-slate-600 dark:text-slate-300 active:scale-95"
                     >
-                        TH
-                    </button>
-                    <button
-                        onClick={() => setLang('en')}
-                        className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${lang === 'en' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                    >
-                        EN
+                        {lang.toUpperCase()}
                     </button>
                 </div>
             </div>

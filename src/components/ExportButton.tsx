@@ -34,6 +34,24 @@ export default function ExportButton() {
             };
         });
 
+        // Calculate Totals
+        const totalNet = data.reduce((sum, d) => sum + d.netHours, 0);
+        const totalO10 = data.reduce((sum, d) => sum + (otInputs[d.day]?.o10 || 0), 0);
+        const totalO15 = data.reduce((sum, d) => sum + (otInputs[d.day]?.o15 || 0), 0);
+        const totalO20 = data.reduce((sum, d) => sum + (otInputs[d.day]?.o20 || 0), 0);
+        const totalO30 = data.reduce((sum, d) => sum + (otInputs[d.day]?.o30 || 0), 0);
+
+        sheetData.push({
+            [headers[0]]: dict.tableSummary || "Total",
+            [headers[1]]: "",
+            [headers[2]]: totalNet,
+            [headers[3]]: totalO10,
+            [headers[4]]: totalO15,
+            [headers[5]]: totalO20,
+            [headers[6]]: totalO30,
+            [headers[7]]: ""
+        });
+
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(sheetData);
 

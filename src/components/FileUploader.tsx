@@ -17,8 +17,8 @@ export default function FileUploader() {
         setBusy(true);
         setError(null);
         try {
-            const { results, monthIdx, year } = await analyzePdf(file, lang);
-            setData(results, monthIdx, year);
+            const { results, monthIdx, year, otInputs } = await analyzePdf(file, lang);
+            setData(results, monthIdx, year, otInputs);
 
             // Reset logic implicitly handled by store or component remount
             // We might want to clear previous OT inputs here if needed
