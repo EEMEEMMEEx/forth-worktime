@@ -1,5 +1,11 @@
 # Project Log
 
+## [2026-05-02] deployment | GitHub Release & Code Cleanup
+- **Deployment**: Successfully pushed the current state to [GitHub](https://github.com/bearnannan/forth-worktime).
+- **Cleanup**: Updated `.gitignore` to exclude scratch files, temporary PDFs, and local test logs.
+- **Documentation**: Finalized the initial version of the Wiki (7 core pages) documenting the architecture, state, and logic.
+- **Git Hygiene**: Staged and committed 33 files covering the entire feature set from OT parsing to Firestore sync and UI polish.
+
 ## [2026-05-02] UI | Advanced Data Visualization & Final Polish
 - **Enhanced Chart Interactivity**: Added metric switching (Net Hours vs OT Hours) with stacked bars for OT breakdown.
 - **PWA Polish**: Updated layout metadata with `appleWebApp` tags and dynamic `themeColor` viewport settings for mobile.
