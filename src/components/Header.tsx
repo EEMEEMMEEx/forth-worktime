@@ -2,12 +2,12 @@
 import { useStore } from '@/lib/store';
 import { dictionaries } from '@/lib/dictionaries';
 import { Button } from './ui/Primitive';
-import { Printer, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { Printer, Cloud, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import ExportButton from './ExportButton';
 import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
-    const { lang, setLang, data, busy, syncing, uid } = useStore();
+    const { lang, setLang, data, busy, syncing, uid, syncError } = useStore();
     const dict = dictionaries[lang];
 
     const handlePrint = () => {
@@ -23,6 +23,8 @@ export default function Header() {
                         <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-white/50 dark:bg-slate-800/50 border border-white/20 dark:border-slate-700/50 text-slate-400 backdrop-blur-sm">
                             {!uid ? (
                                 <><CloudOff className="w-3 h-3 text-rose-500" /> <span className="hidden xs:inline">Offline</span></>
+                            ) : syncError ? (
+                                <><AlertTriangle className="w-3 h-3 text-amber-500" /> <span className="hidden xs:inline">Sync Error</span></>
                             ) : syncing ? (
                                 <><RefreshCw className="w-3 h-3 animate-spin text-indigo-500" /> <span className="hidden xs:inline">Syncing</span></>
                             ) : (
@@ -32,6 +34,9 @@ export default function Header() {
                     )}
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">{dict.appSubtitle}</p>
+                {syncError && (
+                    <p className="text-amber-600 dark:text-amber-400 mt-2 text-xs font-semibold">{syncError}</p>
+                )}
             </div>
 
             <div className="flex flex-row-reverse sm:flex-row items-center justify-between sm:justify-end w-full sm:w-auto gap-4">

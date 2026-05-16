@@ -1,5 +1,36 @@
 # Project Log
 
+## [2026-05-16] feature | CI Baseline + Parser Smoke Test
+- Added GitHub Actions workflow at `.github/workflows/ci.yml` to run `npm ci`, `npm run lint`, `npm test`, and `npm run build` on push/PR.
+- Added parser smoke test `src/lib/parser.smoke.test.ts` using real sample file `TIMESTATEMENT_20260502.pdf` to validate the main parse path returns usable monthly output.
+- Normalized type compatibility for dash status variants in `src/lib/types.ts` to keep build/typecheck stable with existing encoded data.
+- Validation: local `npm test`, `npm run lint`, and `npm run build` all passed.
+
+## [2026-05-16] feature | UX Guardrails for Upload + Data Trust Snapshot
+- Improved upload validation in `FileUploader` to explicitly reject non-PDF files and show a user-visible error message.
+- Added upload guidance and known limitations block below uploader for faster self-diagnosis (supported format and scanned PDF limitation).
+- Added parsed-data trust snapshot card in `page.tsx` showing detected month, holiday count, weekend count, and OT-day count.
+- Extended dictionary keys for new validation/trust UI labels.
+- Validation: `npm run lint` and `npm test` both passed.
+
+## [2026-05-16] feature | Sync Correctness + Error Surfacing
+- Refactored auth/sync flow so OT loading is handled in `SyncHandler` with an active `{uid}_{year}_{month}` key guard to prevent stale async merges when context changes.
+- Added timestamp-based merge strategy (last-write-wins on overlap) using remote `updatedAt` metadata from Firestore.
+- Extended state model in `src/lib/store.ts` with `syncError`, `otUpdatedAt`, and `remoteUpdatedAt`, plus `applyRemoteOT` for deterministic merge behavior.
+- Updated `Header` sync badge to show explicit `Sync Error` state and display error text when sync/auth operations fail.
+- Validation: `npm test` and `npm run lint` both passed.
+
+## [2026-05-16] refactor | Parser OT Logic Isolation + Unit Tests
+- Refactored OT business rules out of `src/lib/parser.ts` into `src/lib/ot.ts` as pure functions (`calculateOTWithShift`, `calculateOTWithoutShift`, time normalization and overlap helpers).
+- Improved parser keyword robustness by supporting both proper Thai keywords and legacy garbled text variants for summary/holiday/earn-label matching.
+- Added first unit test suite `src/lib/ot.test.ts` and introduced `vitest` with `npm test` script for regression safety.
+- Validation: `npm test` passed (6/6 tests).
+
+## [2026-05-16] docs | Improvement Roadmap Added
+- Added `wiki/improvement_roadmap.md` with a prioritized plan focused on parser reliability, sync correctness, UX guardrails, and engineering baseline.
+- Updated `wiki/index.md` to include the new roadmap page and refreshed last-updated date.
+- Recommendations were derived from current implementation in `src/lib/parser.ts`, `src/components/AuthHandler.tsx`, `src/components/SyncHandler.tsx`, and `src/components/FileUploader.tsx`.
+
 ## [2026-05-02] deployment | GitHub Release & Code Cleanup
 - **Deployment**: Successfully pushed the current state to [GitHub](https://github.com/bearnannan/forth-worktime).
 - **Cleanup**: Updated `.gitignore` to exclude scratch files, temporary PDFs, and local test logs.

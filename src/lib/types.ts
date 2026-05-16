@@ -3,15 +3,15 @@ export interface WorkDay {
   date: string;
   inOut: string;
   netHours: number;
-  status: 'Weekend' | 'Holiday' | '–';
+  status: 'Weekend' | 'Holiday' | '–' | 'â€“';
   dayOfWeek: number;
 }
 
 export interface OTData {
-  o10: number; // OT 1.0
-  o15: number; // OT 1.5
-  o20: number; // OT 2.0
-  o30: number; // OT 3.0
+  o10: number;
+  o15: number;
+  o20: number;
+  o30: number;
 }
 
 export interface PaySettings {
@@ -21,4 +21,4 @@ export interface PaySettings {
 
 export type Language = 'en' | 'th';
 
-export type OTInputMap = Record<number, OTData>; // Key is day number
+export type OTInputMap = Record<number, OTData>;

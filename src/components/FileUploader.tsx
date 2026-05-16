@@ -10,9 +10,16 @@ export default function FileUploader() {
     const { lang, busy, setBusy, setData } = useStore();
     const dict = dictionaries[lang];
     const [error, setError] = useState<string | null>(null);
+    const [selectedName, setSelectedName] = useState<string>(dict.uploaderFilename);
 
     const handleFile = async (file: File) => {
-        if (file.type !== 'application/pdf') return;
+        setSelectedName(file.name || dict.uploaderFilename);
+        const isPdfByMime = file.type === 'application/pdf';
+        const isPdfByName = file.name.toLowerCase().endsWith('.pdf');
+        if (!isPdfByMime && !isPdfByName) {
+            setError(dict.errorInvalidFileType);
+            return;
+        }
 
         setBusy(true);
         setError(null);
@@ -41,7 +48,7 @@ export default function FileUploader() {
                     <span className="mt-2 block text-sm font-semibold text-violet-600 group-hover:scale-105 transition-transform">
                         {dict.uploaderText}
                     </span>
-                    <p className="text-xs text-slate-500 mt-1">{dict.uploaderFilename}</p>
+                    <p className="text-xs text-slate-500 mt-1">{selectedName}</p>
                 </div>
 
                 {busy && (
@@ -63,6 +70,10 @@ export default function FileUploader() {
                     {dict.errorPrefix} {error}
                 </div>
             )}
+            <div className="mt-4 rounded-xl border border-slate-200/70 bg-slate-50/70 dark:bg-slate-900/40 dark:border-slate-700 p-3">
+                <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">{dict.uploaderHint}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{dict.uploaderLimitation}</p>
+            </div>
         </Card>
     );
 }

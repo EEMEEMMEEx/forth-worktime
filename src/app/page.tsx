@@ -11,8 +11,11 @@ import { Card } from '@/components/ui/Primitive';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Home() {
-  const { lang, data, monthIdx, year } = useStore();
+  const { lang, data, monthIdx, year, otInputs } = useStore();
   const dict = dictionaries[lang];
+  const holidayDays = data.filter((d) => d.status === 'Holiday').length;
+  const weekendDays = data.filter((d) => d.status === 'Weekend').length;
+  const otDays = Object.values(otInputs).filter((ot) => (ot.o10 + ot.o15 + ot.o20 + ot.o30) > 0).length;
 
   return (
     <main className="max-w-7xl mx-auto p-4 md:p-10 space-y-10 min-h-screen pb-20 selection:bg-indigo-100 selection:text-indigo-900 dark:selection:bg-indigo-500/30 dark:selection:text-indigo-200 transition-colors duration-500">
@@ -46,6 +49,31 @@ export default function Home() {
           >
             {/* Analytics Dashboard */}
             <StatsGrid />
+            <Card className="p-5">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">
+                {dict.dataSourceTitle}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2">
+                  <div className="text-[11px] text-slate-500">{dict.dataSourceMonth}</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">
+                    {monthIdx !== null && year ? new Intl.DateTimeFormat(lang === 'th' ? 'th-TH' : 'en-US', { month: 'short', year: 'numeric' }).format(new Date(year, monthIdx)) : '-'}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2">
+                  <div className="text-[11px] text-slate-500">{dict.dataSourceHolidayDays}</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">{holidayDays}</div>
+                </div>
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2">
+                  <div className="text-[11px] text-slate-500">{dict.dataSourceWeekendDays}</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">{weekendDays}</div>
+                </div>
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2">
+                  <div className="text-[11px] text-slate-500">{dict.dataSourceOtDays}</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">{otDays}</div>
+                </div>
+              </div>
+            </Card>
 
             {/* Bento Grid Container */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 auto-rows-auto">
