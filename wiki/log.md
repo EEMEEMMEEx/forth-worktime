@@ -1,5 +1,10 @@
 # Project Log
 
+## [2026-05-16] fix | Parser Smoke Test Fixture Guard
+- Updated `src/lib/parser.smoke.test.ts` to skip the smoke test when `TIMESTATEMENT_20260502.pdf` is not present in the workspace.
+- This prevents CI failures caused by missing local-only fixture files while preserving real-PDF smoke validation in environments where the file exists.
+- Root cause observed in CI: `ENOENT` reading `/home/runner/work/forth-worktime/forth-worktime/TIMESTATEMENT_20260502.pdf`.
+
 ## [2026-05-16] feature | CI Baseline + Parser Smoke Test
 - Added GitHub Actions workflow at `.github/workflows/ci.yml` to run `npm ci`, `npm run lint`, `npm test`, and `npm run build` on push/PR.
 - Added parser smoke test `src/lib/parser.smoke.test.ts` using real sample file `TIMESTATEMENT_20260502.pdf` to validate the main parse path returns usable monthly output.

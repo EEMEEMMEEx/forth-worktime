@@ -1,11 +1,14 @@
 import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { analyzePdf } from './parser';
 
 describe('parser smoke', () => {
-  it('parses a real monthly PDF and returns usable summary data', async () => {
-    const samplePath = path.resolve(process.cwd(), 'TIMESTATEMENT_20260502.pdf');
+  const samplePath = path.resolve(process.cwd(), 'TIMESTATEMENT_20260502.pdf');
+  it.skipIf(!existsSync(samplePath))(
+    'parses a real monthly PDF and returns usable summary data',
+    async () => {
     const fileBuffer = await readFile(samplePath);
     const file = new File([fileBuffer], 'TIMESTATEMENT_20260502.pdf', {
       type: 'application/pdf'
@@ -20,5 +23,7 @@ describe('parser smoke', () => {
     expect(result.results.length).toBeLessThanOrEqual(31);
     expect(result.results.some((d) => d.netHours > 0)).toBe(true);
     expect(typeof result.otInputs).toBe('object');
-  }, 30000);
+    },
+    30000
+  );
 });
