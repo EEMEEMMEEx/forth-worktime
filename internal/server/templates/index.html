@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="th" x-data="worktimeApp()" :class="{ 'dark': darkMode }">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WorkTime Analyzer (v1.3.2 Go Standalone)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Outfit', 'sans-serif'] },
+          colors: {
+            brand: { 50: '#F5F3FF', 100: '#EDE9FE', 500: '#8B5CF6', 600: '#7C3AED', 700: '#6D28D9' }
+          }
+        }
+      }
+    }
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    input[type="number"] { -moz-appearance: textfield; }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .dark .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+    @media print {
+      body { background: #fff !important; color: #000 !important; font-size: 10pt; }
+      .no-print { display: none !important; }
+      .glass-card, .overflow-x-auto { overflow: visible !important; box-shadow: none !important; background: transparent !important; border: 1px solid #cbd5e1 !important; }
+      th.sticky, td.sticky { position: static !important; background: transparent !important; box-shadow: none !important; }
+      input[type="number"] { border: none !important; background: transparent !important; box-shadow: none !important; text-align: center; }
+      thead { display: table-header-group !important; }
+      tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased selection:bg-indigo-100 selection:text-indigo-900 transition-colors duration-300">
+  <!-- Print Header -->
+  <div class="hidden print:block p-4 border-b border-slate-200 mb-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-xl font-bold">WorkTime Analyzer - Monthly Attendance & OT Report</h1>
+      <span class="text-xs text-slate-500" x-text="new Date().toLocaleDateString()"></span>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto p-4 md:p-8 space-y-6 pb-20">
+    <!-- Header Navbar -->
+    <header class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 glass-card p-5 md:p-6 rounded-3xl shadow-sm no-print">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-fuchsia-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-indigo-500/20">
+          W
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg md:text-xl font-extrabold tracking-tight" x-text="t('appTitle')"></h1>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">v1.3.2 Go</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-400 font-medium" x-text="t('appSubtitle')"></p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <!-- Storage Status Indicator -->
+        <span class="px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 border"
+              :class="{
+                'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800': syncStatus === 'saved',
+                'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800': syncStatus === 'saving',
+                'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800': syncStatus === 'error',
+                'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700': syncStatus === 'idle'
+              }">
+          <span class="w-2 h-2 rounded-full"
+                :class="{
+                  'bg-emerald-500': syncStatus === 'saved',
+                  'bg-amber-500 animate-pulse': syncStatus === 'saving',
+                  'bg-rose-500': syncStatus === 'error',
+                  'bg-slate-400': syncStatus === 'idle'
+                }"></span>
+          <span x-text="syncStatus === 'saving' ? t('saving') : (syncStatus === 'saved' ? t('sqliteSaved') : (syncStatus === 'error' ? t('syncError') : t('ready')))"></span>
+        </span>
+
+        <!-- Language Switch -->
+        <button @click="toggleLang()" aria-label="Toggle language" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition">
+          <span x-text="lang.toUpperCase()"></span>
+        </button>
+
+        <!-- Dark/Light Theme -->
+        <button @click="darkMode = !darkMode; toggleDarkMode()" aria-label="Toggle dark mode" class="p-2 rounded-xl border border-orange-400 dark:border-orange-500 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition">
+          <svg x-show="!darkMode" class="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          <svg x-show="darkMode" class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        </button>
+
+        <!-- Preview PDF Button -->
+        <button x-show="data.length > 0" @click="previewPdf()" :disabled="pdfLoading" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white text-xs font-bold flex items-center gap-1.5 shadow hover:scale-[1.02] active:scale-95 transition disabled:opacity-60">
+          <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <span x-text="pdfLoading ? t('generatingPdf') : t('exportPdfButton')"></span>
+        </button>
+
+        <!-- Export Excel Button -->
+        <button x-show="data.length > 0" @click="exportExcel()" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold flex items-center gap-1.5 shadow hover:scale-[1.02] active:scale-95 transition">
+          <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>
+          <span x-text="t('exportButton')"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Upload Card: Full Dropzone (when empty) vs Compact Toolbar (when file loaded) -->
+    <section class="glass-card rounded-3xl transition-all duration-300 no-print"
+             :class="data.length > 0 ? 'p-4' : 'p-8 text-center border-dashed border-2 border-indigo-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500'">
+      <input type="file" id="pdfInput" accept=".pdf" class="sr-only" @change="handleFileUpload($event)">
+
+      <!-- State 1: Compact Toolbar (After PDF Loaded) -->
+      <div x-show="data.length > 0" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200" x-text="fileName"></div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">
+              <span x-text="data.length"></span> <span x-text="t('tableDaysParsed')"></span> · <span x-text="formattedMonthYear"></span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="pdfInput" class="cursor-pointer px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold text-indigo-600 dark:text-indigo-400 transition">
+            <span x-text="t('changeFile')"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- State 2: Full Empty Dropzone (Initial) -->
+      <div x-show="data.length === 0">
+        <label for="pdfInput" class="cursor-pointer flex flex-col items-center justify-center gap-3">
+          <div class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center shadow-inner">
+            <svg class="w-7 h-7 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100" x-text="t('uploaderText')"></h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-1" x-text="t('uploaderHint')"></p>
+          </div>
+          <div x-show="busy" class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-bold mt-2">
+            <svg class="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            <span x-text="t('loaderText')"></span>
+          </div>
+        </label>
+      </div>
+
+      <div x-show="errorMessage" class="mt-3 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-xs font-semibold border border-rose-200 dark:border-rose-900" x-text="errorMessage"></div>
+    </section>
+
+    <!-- Dashboard Content (Visible after PDF loaded) -->
+    <div x-show="data.length > 0" class="space-y-6">
+      <!-- 4 Core Metrics Grid (Cleaned: no duplicate Total Hours) -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card p-4 md:p-5 rounded-3xl border-l-4 border-l-indigo-500">
+          <div class="text-xs font-bold text-slate-600 dark:text-slate-400" x-text="t('statsTotalDays')"></div>
+          <div class="text-2xl md:text-3xl font-black mt-1 text-slate-800 dark:text-slate-100" x-text="totalWorkDays"></div>
+        </div>
+        <div class="glass-card p-4 md:p-5 rounded-3xl border-l-4 border-l-fuchsia-500">
+          <div class="text-xs font-bold text-slate-600 dark:text-slate-400" x-text="t('statsTotalOTHours')"></div>
+          <div class="text-2xl md:text-3xl font-black mt-1 text-slate-800 dark:text-slate-100">
+            <span x-text="totalOtHours.toFixed(2)"></span> <span class="text-xs text-slate-500 font-semibold">hrs</span>
+          </div>
+        </div>
+        <div class="glass-card p-4 md:p-5 rounded-3xl border-l-4 border-l-emerald-500">
+          <div class="text-xs font-bold text-slate-600 dark:text-slate-400" x-text="t('statsAvgHours')"></div>
+          <div class="text-2xl md:text-3xl font-black mt-1 text-slate-800 dark:text-slate-100">
+            <span x-text="avgHoursPerDay.toFixed(2)"></span> <span class="text-xs text-slate-500 font-semibold">h/d</span>
+          </div>
+        </div>
+        <div class="glass-card p-4 md:p-5 rounded-3xl border-l-4 border-l-rose-500">
+          <div class="text-xs font-bold text-slate-600 dark:text-slate-400" x-text="t('statsMaxHours')"></div>
+          <div class="text-2xl md:text-3xl font-black mt-1 text-slate-800 dark:text-slate-100">
+            <span x-text="maxDayHours.toFixed(2)"></span> <span class="text-xs text-slate-500 font-semibold">hrs</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bento Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Hero Card: Month & Total Hours -->
+        <div class="lg:col-span-8 glass-card p-6 md:p-8 rounded-3xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400" x-text="t('reportMonthHeader')"></span>
+            <h2 class="text-2xl md:text-4xl font-extrabold mt-1 tracking-tight text-slate-900 dark:text-slate-100" x-text="formattedMonthYear"></h2>
+            <div class="flex items-center gap-4 mt-3 text-xs text-slate-600 dark:text-slate-300 font-medium flex-wrap">
+              <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 12a10.06 10.06 0 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg>
+                <span x-text="t('dataSourceHolidayDays')"></span>: <strong class="text-slate-800 dark:text-slate-100" x-text="holidayDaysCount"></strong>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+                <span x-text="t('dataSourceWeekendDays')"></span>: <strong class="text-slate-800 dark:text-slate-100" x-text="weekendDaysCount"></strong>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+                <span x-text="t('dataSourceOtDays')"></span>: <strong class="text-slate-800 dark:text-slate-100" x-text="otDaysCount"></strong>
+              </span>
+            </div>
+          </div>
+          <div class="bg-indigo-50/80 dark:bg-slate-900/60 p-5 md:p-6 rounded-2xl border border-indigo-100 dark:border-slate-800 text-right">
+            <div class="text-xs font-bold text-slate-600 dark:text-slate-400" x-text="t('totalNetHoursHeader')"></div>
+            <div class="text-3xl md:text-4xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight" x-text="totalNetHours.toFixed(2)"></div>
+          </div>
+        </div>
+
+        <!-- OT Summary Card with Empty State Guidance -->
+        <div class="lg:col-span-4 glass-card p-6 rounded-3xl flex flex-col justify-between">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100" x-text="t('otSummaryTitle')"></h3>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">Overview</span>
+          </div>
+
+          <!-- Empty State Callout when no OT inputs -->
+          <div x-show="totalOtHours === 0" class="p-3 mb-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+            <span x-text="t('noOtGuidance')"></span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 flex-grow">
+            <div class="p-3 rounded-2xl bg-indigo-50 dark:bg-slate-800/50 text-center border border-indigo-100 dark:border-slate-700">
+              <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400">OT 1.0</div>
+              <div class="text-lg md:text-xl font-black mt-1" x-text="otTotals.o10.toFixed(2)"></div>
+            </div>
+            <div class="p-3 rounded-2xl bg-fuchsia-50 dark:bg-slate-800/50 text-center border border-fuchsia-100 dark:border-slate-700">
+              <div class="text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400">OT 1.5</div>
+              <div class="text-lg md:text-xl font-black mt-1" x-text="otTotals.o15.toFixed(2)"></div>
+            </div>
+            <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-slate-800/50 text-center border border-emerald-100 dark:border-slate-700">
+              <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400">OT 2.0</div>
+              <div class="text-lg md:text-xl font-black mt-1" x-text="otTotals.o20.toFixed(2)"></div>
+            </div>
+            <div class="p-3 rounded-2xl bg-rose-50 dark:bg-slate-800/50 text-center border border-rose-100 dark:border-slate-700">
+              <div class="text-xs font-bold text-rose-600 dark:text-rose-400">OT 3.0</div>
+              <div class="text-lg md:text-xl font-black mt-1" x-text="otTotals.o30.toFixed(2)"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pay Calculator Card with Empty State Guidance -->
+        <div class="lg:col-span-7 glass-card p-6 md:p-8 rounded-3xl space-y-5">
+          <div class="flex justify-between items-center">
+            <h3 class="font-bold text-base text-slate-800 dark:text-slate-100" x-text="t('payCalcTitle')"></h3>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">Live Compute</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="monthlySalary" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1" x-text="t('monthlySalaryLabel')"></label>
+              <input id="monthlySalary" type="number" x-model.number="pay.monthlySalary" @input="savePayDebounced()" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none text-sm" placeholder="0">
+            </div>
+            <div>
+              <label for="baseHours" class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1" x-text="t('baseHoursLabel')"></label>
+              <input id="baseHours" type="number" x-model.number="pay.baseHours" @input="savePayDebounced()" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none text-sm" placeholder="240">
+            </div>
+          </div>
+
+          <!-- Empty State Warning when Salary is 0 -->
+          <div x-show="pay.monthlySalary === 0" class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-300">
+            <span x-text="t('salaryZeroGuidance')"></span>
+          </div>
+
+          <div class="text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3">
+            <span x-text="t('effectiveRateLabel')"></span>
+            <span class="font-extrabold text-indigo-600 dark:text-indigo-400 text-sm">฿ <span x-text="effectiveRate.toFixed(2)"></span> / hr</span>
+          </div>
+
+          <!-- Total Payout Banner -->
+          <div class="p-5 md:p-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex justify-between items-center shadow-lg shadow-emerald-500/20">
+            <div>
+              <div class="text-xs font-black uppercase tracking-wider opacity-90" x-text="t('totalOtPayLabel')"></div>
+              <div class="text-2xl md:text-3xl font-black mt-1">฿ <span x-text="payout.totalPay.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })"></span></div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Work Chart Card -->
+        <div class="lg:col-span-5 glass-card p-6 rounded-3xl flex flex-col justify-between">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100" x-text="t('chartTitle')"></h3>
+            <div class="flex rounded-xl p-0.5 bg-slate-100 dark:bg-slate-800 text-xs font-bold no-print">
+              <button @click="setChartMode('net')" :class="{ 'bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-indigo-400': chartMode === 'net' }" class="px-2.5 py-1 rounded-lg">Net</button>
+              <button @click="setChartMode('ot')" :class="{ 'bg-white dark:bg-slate-700 shadow text-indigo-600 dark:text-indigo-400': chartMode === 'ot' }" class="px-2.5 py-1 rounded-lg">OT</button>
+            </div>
+          </div>
+          <div class="relative h-60 w-full" id="chartContainer">
+            <canvas id="workChartCanvas" role="img" :aria-label="t('chartTitle')"></canvas>
+          </div>
+        </div>
+
+        <!-- Detailed Work Table -->
+        <div class="lg:col-span-12 glass-card rounded-3xl overflow-hidden shadow-sm">
+          <div class="p-5 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <h3 class="font-bold text-base text-slate-800 dark:text-slate-100" x-text="t('tableHeader')"></h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Editable OT values auto-save to local SQLite</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-500">
+              <span class="inline-flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span x-text="t('anomalyLegend')"></span>
+              </span>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm border-collapse">
+              <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 text-xs font-bold">
+                <tr>
+                  <th class="px-4 py-3 sticky left-0 z-20 bg-slate-100 dark:bg-slate-900 shadow-[2px_0_5px_rgba(0,0,0,0.04)]" x-text="t('tableDate')"></th>
+                  <th class="px-4 py-3" x-text="t('tableInOut')"></th>
+                  <th class="px-4 py-3 text-right" x-text="t('tableNetHours')"></th>
+                  <th class="px-4 py-3 text-center">OT 1.0</th>
+                  <th class="px-4 py-3 text-center">OT 1.5</th>
+                  <th class="px-4 py-3 text-center">OT 2.0</th>
+                  <th class="px-4 py-3 text-center">OT 3.0</th>
+                  <th class="px-4 py-3 text-center" x-text="t('tableStatus')"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                <template x-for="row in data" :key="row.day">
+                  <tr class="transition group"
+                      :class="{
+                        'bg-slate-50/50 dark:bg-slate-900/40 text-slate-400 dark:text-slate-500': isCompactRow(row),
+                        'hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30': !isCompactRow(row)
+                      }">
+                    
+                    <!-- Sticky Date Column with Solid Opaque Background -->
+                    <td class="px-4 py-2.5 font-bold sticky left-0 z-10 whitespace-nowrap shadow-[2px_0_5px_rgba(0,0,0,0.04)] dark:shadow-[2px_0_5px_rgba(0,0,0,0.3)]"
+                        :class="isCompactRow(row) ? 'bg-slate-50 dark:bg-slate-900' : 'bg-white dark:bg-slate-900 group-hover:bg-indigo-50/40 dark:group-hover:bg-slate-800'">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-slate-800 dark:text-slate-200" x-text="row.date.substring(0, 5)"></span>
+                        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" x-text="getDayName(row.dayOfWeek)"></span>
+                      </div>
+                    </td>
+
+                    <!-- In-Out Times -->
+                    <td class="px-4 py-2.5 font-mono text-xs text-slate-700 dark:text-slate-300" x-text="row.inOut"></td>
+
+                    <!-- Net Work Hours (with Anomaly Warning Flag) -->
+                    <td class="px-4 py-2.5 font-extrabold text-right tabular-nums whitespace-nowrap">
+                      <div class="flex items-center justify-end gap-1">
+                        <!-- Anomaly Flag Icon -->
+                        <span x-show="isAnomalous(row)" :title="t('anomalyTooltip')" class="cursor-help">
+                          <svg class="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </span>
+                        <span :class="{
+                          'text-indigo-600 dark:text-indigo-400': row.netHours > 0 && !isAnomalous(row),
+                          'text-amber-600 dark:text-amber-400': isAnomalous(row),
+                          'text-slate-300 dark:text-slate-600': row.netHours === 0
+                        }" x-text="row.netHours > 0 ? row.netHours.toFixed(2) : '—'"></span>
+                      </div>
+                    </td>
+                    
+                    <!-- OT 1.0 Input -->
+                    <td class="px-2 py-1.5 text-center">
+                      <input type="number" step="0.5" min="0" max="24"
+                             :value="getOT(row.day, 'o10')"
+                             :aria-label="'Day ' + row.day + ' OT 1.0'"
+                             @input="updateOT(row.day, 'o10', $event.target.value)"
+                             class="w-16 px-2 py-1 text-xs text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </td>
+                    <!-- OT 1.5 Input -->
+                    <td class="px-2 py-1.5 text-center">
+                      <input type="number" step="0.5" min="0" max="24"
+                             :value="getOT(row.day, 'o15')"
+                             :aria-label="'Day ' + row.day + ' OT 1.5'"
+                             @input="updateOT(row.day, 'o15', $event.target.value)"
+                             class="w-16 px-2 py-1 text-xs text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </td>
+                    <!-- OT 2.0 Input -->
+                    <td class="px-2 py-1.5 text-center">
+                      <input type="number" step="0.5" min="0" max="24"
+                             :value="getOT(row.day, 'o20')"
+                             :aria-label="'Day ' + row.day + ' OT 2.0'"
+                             @input="updateOT(row.day, 'o20', $event.target.value)"
+                             class="w-16 px-2 py-1 text-xs text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </td>
+                    <!-- OT 3.0 Input -->
+                    <td class="px-2 py-1.5 text-center">
+                      <input type="number" step="0.5" min="0" max="24"
+                             :value="getOT(row.day, 'o30')"
+                             :aria-label="'Day ' + row.day + ' OT 3.0'"
+                             @input="updateOT(row.day, 'o30', $event.target.value)"
+                             class="w-16 px-2 py-1 text-xs text-center font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </td>
+
+                    <!-- Status Badge -->
+                    <td class="px-4 py-2.5 text-center whitespace-nowrap">
+                      <template x-if="row.status === 'Weekend'">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300" x-text="t('statusWeekend')"></span>
+                      </template>
+                      <template x-if="row.status === 'Holiday'">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300" x-text="t('statusHoliday')"></span>
+                      </template>
+                      <template x-if="row.status !== 'Weekend' && row.status !== 'Holiday'">
+                        <span class="text-slate-300 dark:text-slate-600 text-xs">—</span>
+                      </template>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+              <tfoot class="bg-slate-100 dark:bg-slate-900 font-black text-xs border-t-2 border-slate-200 dark:border-slate-700">
+                <tr>
+                  <td class="px-4 py-3.5 sticky left-0 z-10 bg-slate-100 dark:bg-slate-900 shadow-[2px_0_5px_rgba(0,0,0,0.04)]" x-text="t('tableSummary')"></td>
+                  <td></td>
+                  <td class="px-4 py-3.5 text-right text-indigo-600 dark:text-indigo-400 font-black text-base tabular-nums" x-text="totalNetHours.toFixed(2)"></td>
+                  <td class="px-2 py-3.5 text-center font-black tabular-nums" x-text="otTotals.o10.toFixed(2)"></td>
+                  <td class="px-2 py-3.5 text-center font-black tabular-nums" x-text="otTotals.o15.toFixed(2)"></td>
+                  <td class="px-2 py-3.5 text-center font-black tabular-nums" x-text="otTotals.o20.toFixed(2)"></td>
+                  <td class="px-2 py-3.5 text-center font-black tabular-nums" x-text="otTotals.o30.toFixed(2)"></td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PDF Preview Modal -->
+  <div x-show="showPdfModal" 
+       x-transition:enter="transition ease-out duration-200"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="transition ease-in duration-150"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-sm"
+       style="display: none;"
+       @click.self="closePdfModal()">
+    <div class="glass-card relative flex flex-col w-full max-w-4xl h-[90vh] rounded-3xl overflow-hidden shadow-2xl border border-white/20 dark:border-slate-700/60 bg-white dark:bg-slate-900"
+         @click.stop>
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80">
+        <div>
+          <h3 class="font-extrabold text-base sm:text-lg text-slate-800 dark:text-slate-100" x-text="t('pdfModalTitle')"></h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" x-text="pdfFilename"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button @click="downloadPdf()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold flex items-center gap-1.5 shadow hover:scale-[1.02] active:scale-95 transition">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+            <span x-text="t('downloadPdf')"></span>
+          </button>
+          <button @click="closePdfModal()" aria-label="Close" class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition">
+            <span class="text-lg leading-none font-bold">&times;</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PDF Preview iframe Body -->
+      <div class="flex-1 bg-slate-100 dark:bg-slate-950 p-2 sm:p-4">
+        <template x-if="pdfUrl">
+          <iframe :src="pdfUrl" class="w-full h-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white shadow-inner" title="PDF Preview"></iframe>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic (Alpine.js State) -->
+  <script>
+    const dict = {
+      th: {
+        appTitle: "WorkTime Analyzer",
+        appSubtitle: "ระบบสรุปและคำนวณค่าแรง OT ประจำเดือน",
+        uploaderText: "คลิกเพื่อเลือกไฟล์ PDF รายงานเวลาทำงาน",
+        uploaderHint: "รองรับไฟล์ Attendance/Timestatement PDF รูปแบบวันที่ dd.mm.yyyy",
+        loaderText: "กำลังประมวลผล PDF...",
+        reportMonthHeader: "รายงานประจำเดือน",
+        totalNetHoursHeader: "ชั่วโมงทำงานสุทธิรวม",
+        otSummaryTitle: "สรุปชั่วโมง OT (ชม.)",
+        payCalcTitle: "คำนวณค่าแรง OT",
+        monthlySalaryLabel: "เงินเดือนฐาน (บาท)",
+        baseHoursLabel: "ชั่วโมงฐานต่อเดือน (30×8 = 240)",
+        effectiveRateLabel: "อัตราค่าจ้างต่อชั่วโมง",
+        totalOtPayLabel: "รวมค่าแรง OT ทั้งหมด:",
+        tableDate: "วันที่",
+        tableInOut: "เวลาเข้า-ออก",
+        tableNetHours: "ชม. (สุทธิ)",
+        tableStatus: "สถานะ",
+        chartTitle: "กราฟชั่วโมงทำงานสุทธิต่อวัน",
+        statusWeekend: "วันหยุดสุดสัปดาห์",
+        statusHoliday: "วันหยุดนักขัตฤกษ์",
+        printButton: "พิมพ์รายงาน",
+        exportButton: "ส่งออก Excel",
+        tableSummary: "สรุปยอดรวม",
+        statsTotalDays: "จำนวนวันทำงาน",
+        statsTotalOTHours: "ชั่วโมง OT รวม",
+        statsAvgHours: "เฉลี่ย ชม./วัน",
+        statsMaxHours: "วันทำงานสูงสุด",
+        statsTotalHours: "ชม. ทำงานรวม",
+        tableHeader: "บันทึกเวลาทำงานรายวัน",
+        tableDaysParsed: "วัน",
+        changeFile: "เปลี่ยนไฟล์",
+        dataSourceHolidayDays: "วันหยุด",
+        dataSourceWeekendDays: "วันสุดสัปดาห์",
+        dataSourceOtDays: "วันที่มี OT",
+        saving: "กำลังบันทึก...",
+        sqliteSaved: "SQLite บันทึกแล้ว",
+        syncError: "บันทึกล้มเหลว",
+        ready: "พร้อมใช้งาน",
+        noOtGuidance: "ยังไม่มีบันทึก OT อัตโนมัติ — สามารถกรอกชั่วโมง OT ในตารางด้านล่างได้ทันที",
+        salaryZeroGuidance: "กรุณาระบุเงินเดือนฐานด้านบนเพื่อคำนวณค่าแรง OT รวม",
+        anomalyLegend: "ชั่วโมงทำงานสั้นผิดปกติ (< 4 ชม.)",
+        anomalyTooltip: "ตรวจพบเวลาทำงานสั้นผิดปกติ (อาจถูกหักเวลาพัก 1 ชม.) กรุณาตรวจสอบ",
+        exportPdfButton: "พรีวิว PDF",
+        pdfModalTitle: "ตัวอย่างรายงานรายเดือน (PDF)",
+        downloadPdf: "ดาวน์โหลด PDF",
+        generatingPdf: "กำลังสร้าง PDF...",
+        closeModal: "ปิด"
+      },
+      en: {
+        appTitle: "WorkTime Analyzer",
+        appSubtitle: "Monthly OT & Work Summary Report",
+        uploaderText: "Click to select a PDF attendance report",
+        uploaderHint: "Supported: monthly attendance/timestatement PDF with date dd.mm.yyyy",
+        loaderText: "Processing PDF...",
+        reportMonthHeader: "Summary for",
+        totalNetHoursHeader: "Total Net Work Hours",
+        otSummaryTitle: "OT Summary (Hours)",
+        payCalcTitle: "OT Pay Calculation",
+        monthlySalaryLabel: "Monthly Salary (THB/Month)",
+        baseHoursLabel: "Base Hours per Month (30×8)",
+        effectiveRateLabel: "Effective Hourly Rate",
+        totalOtPayLabel: "Total OT Pay:",
+        tableDate: "Date",
+        tableInOut: "In-Out Time",
+        tableNetHours: "Net (Hrs)",
+        tableStatus: "Status",
+        chartTitle: "Daily Net Work Hours Chart",
+        statusWeekend: "Weekend",
+        statusHoliday: "Holiday",
+        printButton: "Print Report",
+        exportButton: "Export Excel",
+        tableSummary: "Total Summary",
+        statsTotalDays: "Work Days",
+        statsTotalOTHours: "Total OT Hours",
+        statsAvgHours: "Avg Hours/Day",
+        statsMaxHours: "Max Work Day",
+        statsTotalHours: "Total Work Hours",
+        tableHeader: "Detailed Work Logs",
+        tableDaysParsed: "days",
+        changeFile: "Change File",
+        dataSourceHolidayDays: "Holidays",
+        dataSourceWeekendDays: "Weekends",
+        dataSourceOtDays: "OT Days",
+        saving: "Saving...",
+        sqliteSaved: "SQLite Saved",
+        syncError: "Save Error",
+        ready: "Ready",
+        noOtGuidance: "No automatic OT detected — you can enter OT hours directly in the table below",
+        salaryZeroGuidance: "Please enter your monthly base salary above to calculate total OT wages",
+        anomalyLegend: "Unusually short shift (< 4 hrs)",
+        anomalyTooltip: "Unusually short work duration detected (may have had 1h break deducted)",
+        exportPdfButton: "Preview PDF",
+        pdfModalTitle: "Monthly Report PDF Preview",
+        downloadPdf: "Download PDF",
+        generatingPdf: "Generating PDF...",
+        closeModal: "Close"
+      }
+    };
+
+    function worktimeApp() {
+      return {
+        lang: 'th',
+        darkMode: localStorage.getItem('worktime_dark') === 'true',
+        busy: false,
+        fileName: '',
+        errorMessage: '',
+        syncStatus: 'idle',
+        chartMode: 'net',
+        chartInstance: null,
+        saveTimeout: null,
+        paySaveTimeout: null,
+
+        data: [],
+        monthIdx: null,
+        year: null,
+        otInputs: {},
+        pay: { monthlySalary: 0, baseHours: 240 },
+
+        pdfLoading: false,
+        showPdfModal: false,
+        pdfUrl: null,
+        pdfFilename: '',
+
+        init() {
+          if (this.darkMode) document.documentElement.classList.add('dark');
+          // Load saved pay settings
+          fetch('/api/pay').then(res => res.json()).then(p => {
+            if (p && p.baseHours) this.pay = p;
+          }).catch(() => {});
+
+          // Auto-resize chart on window resize
+          window.addEventListener('resize', () => {
+            if (this.chartInstance) this.chartInstance.resize();
+          });
+
+          // Close PDF modal on Escape
+          window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.showPdfModal) {
+              this.closePdfModal();
+            }
+          });
+        },
+
+        t(key) {
+          return dict[this.lang][key] || key;
+        },
+
+        toggleLang() {
+          this.lang = this.lang === 'th' ? 'en' : 'th';
+          if (this.chartInstance) this.updateChart();
+        },
+
+        toggleDarkMode() {
+          localStorage.setItem('worktime_dark', this.darkMode);
+          if (this.chartInstance) this.updateChart();
+        },
+
+        getDayName(dayOfWeek) {
+          const names = this.lang === 'th' 
+            ? ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.']
+            : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          return names[dayOfWeek] || '';
+        },
+
+        get formattedMonthYear() {
+          if (this.monthIdx === null || !this.year) return '—';
+          const d = new Date(this.year, this.monthIdx, 1);
+          return d.toLocaleDateString(this.lang === 'th' ? 'th-TH' : 'en-US', { month: 'long', year: 'numeric' });
+        },
+
+        get totalWorkDays() {
+          return this.data.filter(d => d.netHours > 0).length;
+        },
+
+        get totalNetHours() {
+          return this.data.reduce((sum, d) => sum + d.netHours, 0);
+        },
+
+        get totalOtHours() {
+          const ot = this.otTotals;
+          return ot.o10 + ot.o15 + ot.o20 + ot.o30;
+        },
+
+        get avgHoursPerDay() {
+          const days = this.totalWorkDays;
+          return days > 0 ? this.totalNetHours / days : 0;
+        },
+
+        get maxDayHours() {
+          return this.data.length ? Math.max(...this.data.map(d => d.netHours)) : 0;
+        },
+
+        get holidayDaysCount() {
+          return this.data.filter(d => d.status === 'Holiday').length;
+        },
+
+        get weekendDaysCount() {
+          return this.data.filter(d => d.status === 'Weekend').length;
+        },
+
+        get otDaysCount() {
+          return Object.values(this.otInputs).filter(ot => (ot.o10 + ot.o15 + ot.o20 + ot.o30) > 0).length;
+        },
+
+        get otTotals() {
+          const res = { o10: 0, o15: 0, o20: 0, o30: 0 };
+          for (const ot of Object.values(this.otInputs)) {
+            res.o10 += ot.o10 || 0;
+            res.o15 += ot.o15 || 0;
+            res.o20 += ot.o20 || 0;
+            res.o30 += ot.o30 || 0;
+          }
+          return res;
+        },
+
+        get effectiveRate() {
+          return this.pay.baseHours > 0 ? this.pay.monthlySalary / this.pay.baseHours : 0;
+        },
+
+        get payout() {
+          const rate = this.effectiveRate;
+          const totals = this.otTotals;
+          const p10 = totals.o10 * 1.0 * rate;
+          const p15 = totals.o15 * 1.5 * rate;
+          const p20 = totals.o20 * 2.0 * rate;
+          const p30 = totals.o30 * 3.0 * rate;
+          return { p10, p15, p20, p30, totalPay: p10 + p15 + p20 + p30 };
+        },
+
+        isCompactRow(row) {
+          const hasOt = this.otInputs[row.day] && 
+            (this.otInputs[row.day].o10 > 0 || this.otInputs[row.day].o15 > 0 || this.otInputs[row.day].o20 > 0 || this.otInputs[row.day].o30 > 0);
+          return (row.status === 'Weekend' || row.status === 'Holiday' || row.netHours === 0) && !hasOt;
+        },
+
+        isAnomalous(row) {
+          // Detect unusually short work duration on weekdays (e.g. 0.55 hrs for morning clock-in)
+          return row.netHours > 0 && row.netHours < 4.0 && row.status !== 'Weekend' && row.status !== 'Holiday';
+        },
+
+        getOT(day, rate) {
+          const ot = this.otInputs[day];
+          if (!ot || ot[rate] === undefined || ot[rate] === 0) return '';
+          return ot[rate];
+        },
+
+        updateOT(day, rate, val) {
+          const num = parseFloat(val) || 0;
+          if (!this.otInputs[day]) {
+            this.otInputs[day] = { o10: 0, o15: 0, o20: 0, o30: 0 };
+          }
+          this.otInputs[day][rate] = num;
+          this.syncStatus = 'saving';
+
+          // Debounce auto-save to SQLite
+          if (this.saveTimeout) clearTimeout(this.saveTimeout);
+          this.saveTimeout = setTimeout(() => {
+            this.saveOTData();
+          }, 1500);
+
+          if (this.chartMode === 'ot') this.updateChart();
+        },
+
+        async saveOTData() {
+          if (this.monthIdx === null || !this.year) return;
+          try {
+            const res = await fetch('/api/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                year: this.year,
+                monthIdx: this.monthIdx,
+                otInputs: this.otInputs
+              })
+            });
+            if (res.ok) {
+              this.syncStatus = 'saved';
+            } else {
+              this.syncStatus = 'error';
+            }
+          } catch {
+            this.syncStatus = 'error';
+          }
+        },
+
+        savePayDebounced() {
+          if (this.paySaveTimeout) clearTimeout(this.paySaveTimeout);
+          this.paySaveTimeout = setTimeout(() => {
+            fetch('/api/pay', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.pay)
+            });
+          }, 1000);
+        },
+
+        async handleFileUpload(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          if (!file.name.toLowerCase().endsWith('.pdf')) {
+            this.errorMessage = 'Please select a valid .pdf file';
+            return;
+          }
+
+          this.fileName = file.name;
+          this.busy = true;
+          this.errorMessage = '';
+
+          const formData = new FormData();
+          formData.append('file', file);
+
+          try {
+            const res = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (!res.ok) {
+              const err = await res.text();
+              throw new Error(err || 'Failed to parse PDF');
+            }
+
+            const json = await res.json();
+            this.data = json.data || [];
+            this.monthIdx = json.monthIdx;
+            this.year = json.year;
+            this.otInputs = json.otInputs || {};
+            if (json.pay) this.pay = json.pay;
+            this.syncStatus = 'saved';
+
+            // Ensure DOM is fully painted and parent width is non-zero before initializing Chart
+            setTimeout(() => {
+              this.updateChart();
+            }, 150);
+          } catch (e) {
+            this.errorMessage = e.message || 'Parsing error';
+          } finally {
+            this.busy = false;
+          }
+        },
+
+        setChartMode(mode) {
+          this.chartMode = mode;
+          this.updateChart();
+        },
+
+        updateChart() {
+          const canvas = document.getElementById('workChartCanvas');
+          if (!canvas || !this.data || !this.data.length) return;
+
+          if (this.chartInstance) {
+            this.chartInstance.destroy();
+          }
+
+          const labels = this.data.map(d => `${d.day}`);
+          const isDark = this.darkMode;
+          const textColor = isDark ? '#cbd5e1' : '#475569';
+          const gridColor = isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)';
+
+          let datasets = [];
+          if (this.chartMode === 'net') {
+            datasets = [{
+              label: this.t('tableNetHours'),
+              data: this.data.map(d => d.netHours),
+              backgroundColor: 'rgba(99, 102, 241, 0.8)',
+              borderColor: '#6366f1',
+              borderWidth: 1,
+              borderRadius: 6
+            }];
+          } else {
+            datasets = [
+              {
+                label: 'OT 1.0',
+                data: this.data.map(d => (this.otInputs[d.day] || {}).o10 || 0),
+                backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                stack: 'stack1',
+                borderRadius: 4
+              },
+              {
+                label: 'OT 1.5',
+                data: this.data.map(d => (this.otInputs[d.day] || {}).o15 || 0),
+                backgroundColor: 'rgba(217, 70, 239, 0.85)',
+                stack: 'stack1',
+                borderRadius: 4
+              },
+              {
+                label: 'OT 2.0',
+                data: this.data.map(d => (this.otInputs[d.day] || {}).o20 || 0),
+                backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                stack: 'stack1',
+                borderRadius: 4
+              },
+              {
+                label: 'OT 3.0',
+                data: this.data.map(d => (this.otInputs[d.day] || {}).o30 || 0),
+                backgroundColor: 'rgba(244, 63, 94, 0.85)',
+                stack: 'stack1',
+                borderRadius: 4
+              }
+            ];
+          }
+
+          this.chartInstance = new Chart(canvas, {
+            type: 'bar',
+            data: { labels, datasets },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: { duration: 300 },
+              plugins: {
+                legend: {
+                  display: this.chartMode === 'ot',
+                  labels: { color: textColor, font: { family: 'Outfit', size: 11, weight: 'bold' } }
+                }
+              },
+              scales: {
+                x: {
+                  grid: { display: false },
+                  ticks: { color: textColor, font: { family: 'Outfit', size: 10 } }
+                },
+                y: {
+                  grid: { color: gridColor },
+                  ticks: { color: textColor, font: { family: 'Outfit', size: 11 } },
+                  beginAtZero: true
+                }
+              }
+            }
+          });
+        },
+
+        async exportExcel() {
+          if (!this.data.length || this.monthIdx === null) return;
+          try {
+            const res = await fetch('/api/export', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                data: this.data,
+                otInputs: this.otInputs,
+                monthIdx: this.monthIdx,
+                year: this.year,
+                isThai: this.lang === 'th'
+              })
+            });
+
+            if (!res.ok) throw new Error('Export failed');
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Worktime_${String(this.monthIdx + 1).padStart(2, '0')}_${this.year}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          } catch (e) {
+            alert('Export Error: ' + e.message);
+          }
+        },
+
+        async previewPdf() {
+          if (!this.data.length || this.monthIdx === null) return;
+          this.pdfLoading = true;
+          try {
+            const res = await fetch('/api/export-pdf', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                data: this.data,
+                otInputs: this.otInputs,
+                monthIdx: this.monthIdx,
+                year: this.year,
+                pay: this.pay,
+                isThai: this.lang === 'th'
+              })
+            });
+
+            if (!res.ok) throw new Error('PDF Export failed');
+
+            const blob = await res.blob();
+            if (this.pdfUrl) {
+              window.URL.revokeObjectURL(this.pdfUrl);
+            }
+            this.pdfUrl = window.URL.createObjectURL(blob);
+            this.pdfFilename = `WorkTime_Report_${String(this.monthIdx + 1).padStart(2, '0')}_${this.year}.pdf`;
+            this.showPdfModal = true;
+          } catch (e) {
+            alert('PDF Export Error: ' + e.message);
+          } finally {
+            this.pdfLoading = false;
+          }
+        },
+
+        closePdfModal() {
+          this.showPdfModal = false;
+        },
+
+        downloadPdf() {
+          if (!this.pdfUrl) return;
+          const a = document.createElement('a');
+          a.href = this.pdfUrl;
+          a.download = this.pdfFilename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+      }
+    }
+  </script>
+</body>
+</html>

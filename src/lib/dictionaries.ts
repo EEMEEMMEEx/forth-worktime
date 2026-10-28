@@ -39,7 +39,12 @@ export const dictionaries = {
     dataSourceMonth: 'Detected Month',
     dataSourceHolidayDays: 'Holiday Days',
     dataSourceWeekendDays: 'Weekend Days',
-    dataSourceOtDays: 'Days with OT'
+    dataSourceOtDays: 'Days with OT',
+    exportPdfButton: 'Preview PDF',
+    pdfModalTitle: 'Monthly Report PDF Preview',
+    downloadPdf: 'Download PDF',
+    closeModal: 'Close',
+    generatingPdf: 'Generating PDF...'
   },
   th: {
     appTitle: 'WorkTime Analyzer',
@@ -81,7 +86,12 @@ export const dictionaries = {
     dataSourceMonth: 'เดือนที่ระบุได้',
     dataSourceHolidayDays: 'จำนวนวันหยุด',
     dataSourceWeekendDays: 'จำนวนวันสุดสัปดาห์',
-    dataSourceOtDays: 'จำนวนวันที่มี OT'
+    dataSourceOtDays: 'จำนวนวันที่มี OT',
+    exportPdfButton: 'ดูตัวอย่าง PDF',
+    pdfModalTitle: 'ตัวอย่างเอกสารรายงานประจำเดือน (PDF)',
+    downloadPdf: 'ดาวน์โหลด PDF',
+    closeModal: 'ปิด',
+    generatingPdf: 'กำลังประมวลผล PDF...'
   }
 };
 

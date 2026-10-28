@@ -48,3 +48,7 @@ output*
 !next.config.mjs
 !package-lock.json
 !wiki/**/*.json
+
+*.exe
+*.db
+*.exe~

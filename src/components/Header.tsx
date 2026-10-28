@@ -2,17 +2,15 @@
 import { useStore } from '@/lib/store';
 import { dictionaries } from '@/lib/dictionaries';
 import { Button } from './ui/Primitive';
-import { Printer, Cloud, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Cloud, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import ExportButton from './ExportButton';
+import ExportPdfButton from './ExportPdfButton';
 import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
     const { lang, setLang, data, busy, syncing, uid, syncError } = useStore();
     const dict = dictionaries[lang];
 
-    const handlePrint = () => {
-        window.print();
-    };
 
     return (
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 no-print mb-10">
@@ -43,11 +41,9 @@ export default function Header() {
                 {/* Actions (Only visible if data loaded) */}
                 {!busy && data.length > 0 && (
                     <div className="flex gap-2">
+                        <ExportPdfButton />
                         <ExportButton />
-                        <Button onClick={handlePrint}>
-                            <Printer className="w-5 h-5" />
-                            {dict.printButton}
-                        </Button>
+                        
                     </div>
                 )}
 
@@ -66,3 +62,5 @@ export default function Header() {
         </header>
     );
 }
+
+
