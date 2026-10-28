@@ -1,5 +1,13 @@
 # Project Log
 
+## [2026-10-28] fix | Table Header X/Y Alignment in PDF Report (v1.3.5)
+- Fixed missing `pdf.SetXY(curX, tableY)` in table header loop causing column titles ("วันที่", "เวลาเข้า-ออก") to overlap KPI card.
+- Table header row now renders all column labels centered in their designated slots at `y = 128`.
+- Added bilingual Thai/English label handling for KPI summary cards.
+- Bumped authoritative version to 1.3.5 (PATCH).
+- Validation: `go test -v ./...` passed, `go build` passed, verified generated PDF.
+
+
 ## [2026-10-28] feature | Corporate Logo Header in PDF Report (v1.3.4)
 - Embedded FORTH corporate logo (`public/images/logo.png`) into Go standalone PDF generator via `internal/exporter/images/logo.png`.
 - Added image header holder (`gopdf.ImageByHolder`) displaying official logo next to company name.

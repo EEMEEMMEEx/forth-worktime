@@ -127,32 +127,52 @@ func WritePdfTo(w io.Writer, data []worktime.WorkDay, otInputs worktime.OTInputM
 
 	colW := pageWidth / 4.0
 	// KPI 1: Work days
+	kpi1Label := "วันทำงานสุทธิ:"
+	kpi1Unit := "วัน"
+	if !isThai {
+		kpi1Label = "Work Days:"
+		kpi1Unit = "days"
+	}
 	pdf.SetXY(leftMargin+10, kpiBoxY+6)
-	_ = pdf.Cell(nil, "วันทำงานสุทธิ:")
+	_ = pdf.Cell(nil, kpi1Label)
 	pdf.SetTextColor(79, 70, 229)
 	pdf.SetXY(leftMargin+10, kpiBoxY+18)
-	_ = pdf.Cell(nil, fmt.Sprintf("%d วัน", workDaysCount))
+	_ = pdf.Cell(nil, fmt.Sprintf("%d %s", workDaysCount, kpi1Unit))
 
 	// KPI 2: Total Net Hours
+	kpi2Label := "ชม. ทำงานสุทธิรวม:"
+	kpi2Unit := "ชม."
+	if !isThai {
+		kpi2Label = "Total Net Hours:"
+		kpi2Unit = "hrs"
+	}
 	pdf.SetTextColor(51, 65, 85)
 	pdf.SetXY(leftMargin+colW+10, kpiBoxY+6)
-	_ = pdf.Cell(nil, "ชม. ทำงานสุทธิรวม:")
+	_ = pdf.Cell(nil, kpi2Label)
 	pdf.SetTextColor(79, 70, 229)
 	pdf.SetXY(leftMargin+colW+10, kpiBoxY+18)
-	_ = pdf.Cell(nil, fmt.Sprintf("%.2f ชม.", totalNet))
+	_ = pdf.Cell(nil, fmt.Sprintf("%.2f %s", totalNet, kpi2Unit))
 
 	// KPI 3: Base Salary
+	kpi3Label := "ฐานเงินเดือน (บาท):"
+	if !isThai {
+		kpi3Label = "Base Salary (THB):"
+	}
 	pdf.SetTextColor(51, 65, 85)
 	pdf.SetXY(leftMargin+colW*2+10, kpiBoxY+6)
-	_ = pdf.Cell(nil, "ฐานเงินเดือน (บาท):")
+	_ = pdf.Cell(nil, kpi3Label)
 	pdf.SetTextColor(15, 23, 42)
 	pdf.SetXY(leftMargin+colW*2+10, kpiBoxY+18)
 	_ = pdf.Cell(nil, fmt.Sprintf("%.2f ฿", pay.MonthlySalary))
 
 	// KPI 4: Total OT Pay
+	kpi4Label := "รวมค่าแรง OT สุทธิ:"
+	if !isThai {
+		kpi4Label = "Total OT Pay:"
+	}
 	pdf.SetTextColor(51, 65, 85)
 	pdf.SetXY(leftMargin+colW*3+10, kpiBoxY+6)
-	_ = pdf.Cell(nil, "รวมค่าแรง OT สุทธิ:")
+	_ = pdf.Cell(nil, kpi4Label)
 	pdf.SetTextColor(5, 150, 105) // Emerald-600
 	pdf.SetXY(leftMargin+colW*3+10, kpiBoxY+18)
 	_ = pdf.Cell(nil, fmt.Sprintf("%.2f ฿", totalOtPay))
@@ -183,6 +203,7 @@ func WritePdfTo(w io.Writer, data []worktime.WorkDay, otInputs worktime.OTInputM
 		if i > 0 {
 			pdf.Line(curX, tableY, curX, tableY+20.0)
 		}
+		pdf.SetXY(curX, tableY)
 		_ = pdf.CellWithOption(&gopdf.Rect{W: w, H: 20.0}, h, gopdf.CellOption{Align: gopdf.Center | gopdf.Middle})
 		curX += w
 	}
