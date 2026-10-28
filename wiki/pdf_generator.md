@@ -5,11 +5,11 @@
 1. **Go Standalone (`./worktime.exe`)**: สร้าง PDF ฝั่งเซิร์ฟเวอร์แบบ Pure Go ด้วย `github.com/signintech/gopdf` พร้อมฝังฟอนต์ไทย `THSarabunNew` และ `THSarabunNew-Bold` ลงในไบนารีเดียว (Single Binary) ผ่าน `//go:embed` โดยไม่ต้องพึ่งพา Node.js หรืออินเทอร์เน็ต
 2. **Next.js (`npm run dev`)**: สร้าง PDF ฝั่งไคลเอนต์ 100% ด้วย `@react-pdf/renderer` และฟอนต์ใน `public/fonts/`
 
-## 1. Go Standalone Engine (`./worktime.exe`)
-- **โมดูลหลัก**: `internal/exporter/pdf.go`
+## 1. Go Standalone & Serverless Engine
+- **โมดูลหลัก**: `pkg/exporter/pdf.go`
 - **ฟอนต์ที่ฝังลงในไบนารี**:
-  - `internal/exporter/fonts/THSarabunNew.ttf`
-  - `internal/exporter/fonts/THSarabunNew-Bold.ttf`
+  - `pkg/exporter/fonts/THSarabunNew.ttf`
+  - `pkg/exporter/fonts/THSarabunNew-Bold.ttf`
 - **เอนด์พอยต์ HTTP**: `POST /api/export-pdf`
   - รับข้อมูล `ExportRequest` (Data, OTInputs, MonthIdx, Year, Pay, IsThai)
   - ส่งกลับไฟล์ PDF MIME `application/pdf` (inline display)

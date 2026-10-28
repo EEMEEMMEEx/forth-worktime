@@ -9,18 +9,26 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
-	"forth-worktime/internal/exporter"
-	"forth-worktime/internal/parser"
-	"forth-worktime/internal/repository"
-	"forth-worktime/internal/server"
+	"forth-worktime/pkg/exporter"
+	"forth-worktime/pkg/parser"
+	"forth-worktime/pkg/repository"
+	"forth-worktime/pkg/server"
 	"forth-worktime/pkg/worktime"
 )
 
 func main() {
-	port := flag.Int("port", 8080, "HTTP server listening port")
+	defaultPort := 8080
+	if envPort := os.Getenv("PORT"); envPort != "" {
+		if p, err := strconv.Atoi(envPort); err == nil && p > 0 {
+			defaultPort = p
+		}
+	}
+
+	port := flag.Int("port", defaultPort, "HTTP server listening port")
 	dbPath := flag.String("db", "worktime.db", "Path to SQLite database file")
 	cliParseFile := flag.String("parse", "", "Optional CLI mode: path to a timestatement PDF file to parse directly")
 	cliExportFile := flag.String("export", "", "Optional CLI mode: destination path for .xlsx export")

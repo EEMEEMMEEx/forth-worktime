@@ -1,5 +1,12 @@
 # Project Log
 
+## [2026-10-28] fix | Resolve Vercel Internal Package Restriction by Moving to Pkg (v1.3.7)
+- Moved packages from `internal/` (`exporter`, `parser`, `repository`, `server`) to `pkg/` to resolve Go `internal` package visibility restrictions during Vercel Serverless Function compilation.
+- Updated `api/index.go`, `cmd/worktime/main.go`, and test suites to import from `pkg/*`.
+- Added dynamic port detection via `PORT` environment variable in `cmd/worktime/main.go` for seamless cloud container execution.
+- Bumped authoritative version to 1.3.7 (PATCH).
+- Validation: `go vet ./...` passed, `go test -v ./...` passed (8/8 test suites), `go build ./...` passed.
+
 ## [2026-10-28] feat | Vercel Go Serverless Integration & Submodule Fix (v1.3.6)
 - Implemented Vercel Go Serverless Function handler in `api/index.go` and rewrites in `vercel.json`.
 - Removed dangling gitlink `.agent/skills` (mode 160000) from git index to resolve submodule fetch warning in Vercel CI.

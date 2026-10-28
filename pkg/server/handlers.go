@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"forth-worktime/internal/exporter"
-	"forth-worktime/internal/parser"
-	"forth-worktime/internal/repository"
+	"forth-worktime/pkg/exporter"
+	"forth-worktime/pkg/parser"
+	"forth-worktime/pkg/repository"
 	"forth-worktime/pkg/worktime"
 )
 

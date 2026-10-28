@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"forth-worktime/internal/repository"
-	"forth-worktime/internal/server"
+	"forth-worktime/pkg/repository"
+	"forth-worktime/pkg/server"
 )
 
 var (

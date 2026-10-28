@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"forth-worktime/internal/repository"
-	"forth-worktime/internal/server"
+	"forth-worktime/pkg/repository"
+	"forth-worktime/pkg/server"
 	"forth-worktime/pkg/worktime"
 )
 
