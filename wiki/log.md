@@ -1,5 +1,15 @@
 # Project Log
 
+## [2026-10-28] cleanup | Purge Leftover Node.js, Next.js, and Legacy Artifacts (v1.3.3)
+- Deleted all obsolete Node.js and Next.js dependencies, configs, and source files (`node_modules/`, `.next/`, `src/`, `package.json`, `package-lock.json`, `tsconfig*`, `next.config*`, `postcss*`, `tailwind*`, `.eslintrc*`).
+- Removed ad-hoc root scripts (`scratch*`, `test*.js`, `_legacy/`, redundant PDF fixtures).
+- Retained all vector SVG assets in `internal/server/static/icons/*.svg`, `web/static/icons/*.svg`, and `public/`.
+- Replaced Node CI with pure Go GitHub Actions workflow (`go vet`, `go test -v ./...`, `go build`).
+- Overhauled `README.md` to document the Go Standalone application.
+- Bumped authoritative version to 1.3.3 (PATCH).
+- Validation: `go vet ./...` passed, `go test -v ./...` passed, `go build` passed.
+
+
 ## [2026-10-28] fix | Dark Mode SVG Color Inheritance (v1.3.2)
 - Replaced all isolated `<img src="/static/icons/*.svg">` references with inline vector SVGs in `internal/server/templates/index.html`.
 - Root cause: browser isolates external SVGs in `<img>` tags, defaulting `stroke="currentColor"` to black (#000) and ignoring Tailwind text colors in dark mode.
