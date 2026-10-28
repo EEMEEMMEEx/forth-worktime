@@ -1,5 +1,13 @@
 # Project Log
 
+## [2026-10-28] feat | Vercel Go Serverless Integration & Submodule Fix (v1.3.6)
+- Implemented Vercel Go Serverless Function handler in `api/index.go` and rewrites in `vercel.json`.
+- Removed dangling gitlink `.agent/skills` (mode 160000) from git index to resolve submodule fetch warning in Vercel CI.
+- Added test suite `api/index_test.go` verifying root, version, and static SVG serving.
+- Bumped authoritative version to 1.3.6 (PATCH).
+- Validation: `go vet ./...` passed, `go test -v ./...` passed, `go build ./...` passed.
+
+
 ## [2026-10-28] fix | Table Header X/Y Alignment in PDF Report (v1.3.5)
 - Fixed missing `pdf.SetXY(curX, tableY)` in table header loop causing column titles ("วันที่", "เวลาเข้า-ออก") to overlap KPI card.
 - Table header row now renders all column labels centered in their designated slots at `y = 128`.
