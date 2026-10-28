@@ -24,3 +24,4 @@ output.json
 
 # Keep test fixture
 !TIMESTATEMENT_20260502.pdf
+node_modules

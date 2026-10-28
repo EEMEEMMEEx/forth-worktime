@@ -17,6 +17,9 @@ var fontRegular []byte
 //go:embed fonts/THSarabunNew-Bold.ttf
 var fontBold []byte
 
+//go:embed images/logo.png
+var logoBytes []byte
+
 // WritePdfTo generates an official A4 Monthly WorkTime and OT Report and writes it to w.
 func WritePdfTo(w io.Writer, data []worktime.WorkDay, otInputs worktime.OTInputMap, monthIdx int, year int, pay worktime.PaySettings, isThai bool) error {
 	pdf := gopdf.GoPdf{}
@@ -34,15 +37,23 @@ func WritePdfTo(w io.Writer, data []worktime.WorkDay, otInputs worktime.OTInputM
 	const leftMargin = 30.0
 	const pageWidth = 535.0
 
-	// 1. Company Header
+	// 1. Company Header with Corporate Logo
+	textStartX := leftMargin
+	if len(logoBytes) > 0 {
+		if imgHolder, err := gopdf.ImageHolderByBytes(logoBytes); err == nil {
+			_ = pdf.ImageByHolder(imgHolder, leftMargin, 24, &gopdf.Rect{W: 80, H: 24})
+			textStartX = leftMargin + 88
+		}
+	}
+
 	pdf.SetFont("THSarabunNew-Bold", "", 16)
 	pdf.SetTextColor(30, 58, 138) // Deep Blue (#1e3a8a)
-	pdf.SetXY(leftMargin, 26)
+	pdf.SetXY(textStartX, 26)
 	_ = pdf.Cell(nil, "บริษัท ฟอร์ท คอร์ปอเรชั่น จำกัด (มหาชน)")
 
 	pdf.SetFont("THSarabunNew", "", 9)
 	pdf.SetTextColor(100, 116, 139) // Slate-500
-	pdf.SetXY(leftMargin, 43)
+	pdf.SetXY(textStartX, 43)
 	_ = pdf.Cell(nil, "FORTH CORPORATION PUBLIC COMPANY LIMITED")
 
 	// Month/Year string

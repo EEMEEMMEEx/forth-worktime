@@ -1,5 +1,12 @@
 # Project Log
 
+## [2026-10-28] feature | Corporate Logo Header in PDF Report (v1.3.4)
+- Embedded FORTH corporate logo (`public/images/logo.png`) into Go standalone PDF generator via `internal/exporter/images/logo.png`.
+- Added image header holder (`gopdf.ImageByHolder`) displaying official logo next to company name.
+- Bumped authoritative version to 1.3.4 (PATCH).
+- Validation: `go test -v ./...` passed, `go build` passed.
+
+
 ## [2026-10-28] cleanup | Purge Leftover Node.js, Next.js, and Legacy Artifacts (v1.3.3)
 - Deleted all obsolete Node.js and Next.js dependencies, configs, and source files (`node_modules/`, `.next/`, `src/`, `package.json`, `package-lock.json`, `tsconfig*`, `next.config*`, `postcss*`, `tailwind*`, `.eslintrc*`).
 - Removed ad-hoc root scripts (`scratch*`, `test*.js`, `_legacy/`, redundant PDF fixtures).
