@@ -1,5 +1,69 @@
 # Project Log
 
+## [2026-10-28] fix | Dark Mode SVG Color Inheritance (v1.3.2)
+- Replaced all isolated `<img src="/static/icons/*.svg">` references with inline vector SVGs in `internal/server/templates/index.html`.
+- Root cause: browser isolates external SVGs in `<img>` tags, defaulting `stroke="currentColor"` to black (#000) and ignoring Tailwind text colors in dark mode.
+- Inlined SVGs now directly inherit Tailwind color classes (`text-amber-400`, `text-slate-300`, `text-white`, `text-rose-400`, `text-indigo-400`), rendering clearly in dark mode.
+- Bumped authoritative version to 1.3.2 (PATCH).
+- Validation: `go test ./...` passed, `go build` passed, `npm test` passed.
+
+
+## [2026-10-28] cleanup | Remove Print Button in Favor of Direct PDF (v1.3.1)
+- Removed legacy browser `window.print()` button from header actions across Go Standalone template and Next.js Header.
+- Streamlined header action bar to focus on Preview PDF and Export Excel.
+- Bumped authoritative version to 1.3.1 (PATCH).
+- Validation: `go test ./...` passed, `go build` passed, `npm test` passed.
+
+
+## [2026-10-28] feature | Pure Go Standalone PDF Engine & In-App Preview Modal (v1.3.0)
+- Implemented pure Go A4 Monthly WorkTime & OT Report generator in `internal/exporter/pdf.go` using `github.com/signintech/gopdf`.
+- Embedded official Thai fonts `THSarabunNew.ttf` and `THSarabunNew-Bold.ttf` via `//go:embed` inside single binary.
+- Added HTTP endpoint `POST /api/export-pdf` serving inline PDF streams for in-browser rendering.
+- Added Preview PDF button and Glassmorphism Preview Modal with iframe in `internal/server/templates/index.html`.
+- Added CLI flag `-export-pdf <filename.pdf>` to enable direct terminal-based PDF export without running web server.
+- Bumped authoritative version to 1.3.0 (MINOR).
+- Validation: `go test -v ./...` passed, `npm test` passed, real sample CLI PDF generation verified (103 KB output).
+
+
+## [2026-10-28] style | Theme Toggle Orange Border Accent (v1.2.1)
+- Updated dark/light mode toggle button border to warm orange (`border-orange-400 dark:border-orange-500`) with hover states.
+- Applied across both Go standalone embedded template (`internal/server/templates/index.html`) and Next.js component (`ThemeToggle.tsx`).
+- Bumped authoritative version to 1.2.1 (PATCH).
+- Validation: `go test ./...` passed, `npm test` passed.
+
+
+## [2026-10-28] feature | Client-Side PDF Generator with @react-pdf/renderer (v1.2.0)
+- Integrated `@react-pdf/renderer` for 100% client-side A4 report generation.
+- Registered official Thai font family `THSarabunNew` (Regular, Bold, Italic, BoldItalic) from `public/fonts/`.
+- Designed official A4 monthly WorkTime and OT payout report template in `src/lib/pdf-template.tsx`.
+- Implemented `PdfPreviewModal` with iframe rendering, download action, backdrop blur, and ESC key listener.
+- Implemented lazy-loaded `ExportPdfButton` in `Header.tsx` to optimize initial bundle size.
+- Validation: `npm run build` passed, `npm test` passed (7/7 tests), `go test ./...` passed.
+
+
+## [2026-10-28] feature | Comprehensive UX/UI Overhaul & Standalone SVG Migration (v1.1.0)
+- Fixed Work Logs first column blank/bleed defect with opaque background and sticky shadow on table date cells.
+- Resolved empty Chart.js rendering issue with delayed initialization and resize listener.
+- Replaced all emojis and icon fonts with 11 standalone vector SVG assets in `web/static/icons/*.svg` served via embedded static router.
+- Added actionable empty-state guidance for OT Summary and Pay Calculator when salary is zero or OT inputs are unpopulated.
+- Implemented compact rows for weekends, holidays, and no-data days, reducing table height and visual clutter.
+- Added visual anomaly detection for unusually short work hours (< 4 hrs) with warning tooltip.
+- Upgraded small labels from 10px slate-400 to WCAG AA-compliant 12px text-slate-600/slate-300.
+- Implemented compact upload toolbar once a file is loaded, saving 200px+ vertical space.
+- Reorganized dashboard metrics, replacing duplicate Total Work Hours with Total OT Hours.
+- Optimized print layout for A4: hidden navbar, expanded table overflow, and flattened sticky columns.
+
+
+## [2026-10-28] refactor | Full Codebase Migration to Go Standalone Binary (v1.0.0)
+- Migrated core PDF extraction and normalization from `pdfjs-dist` to pure Go using `github.com/ledongthuc/pdf`.
+- Ported overtime calculation engine (`calculateOTWithShift`, `calculateOTWithoutShift`, rounding, and overlap logic) to `pkg/worktime/ot.go`.
+- Implemented Excel report generator using `github.com/xuri/excelize/v2` in `internal/exporter/excel.go`.
+- Replaced remote Firestore cloud sync with local zero-cgo SQLite persistence using `modernc.org/sqlite` in `internal/repository/sqlite.go`.
+- Implemented embedded fullstack web server (`net/http` + Alpine.js + Tailwind) with single binary distribution (`cmd/worktime/main.go`).
+- Added CLI parsing mode (`worktime -parse <pdf> -export <xlsx>`).
+- Validation: all Go unit and smoke tests passed in <0.05s (`go test ./pkg/... ./internal/...`).
+
+
 ## [2026-05-16] fix | Parser Smoke Test Fixture Guard
 - Updated `src/lib/parser.smoke.test.ts` to skip the smoke test when `TIMESTATEMENT_20260502.pdf` is not present in the workspace.
 - This prevents CI failures caused by missing local-only fixture files while preserving real-PDF smoke validation in environments where the file exists.

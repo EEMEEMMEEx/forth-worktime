@@ -9,6 +9,8 @@ This index serves as a content-oriented catalog of the `forth-worktime` project.
 - [Parsing Logic](./parsing_logic.md): PDF processing rules and normalization.
 - [Core Skills](./core_skills.md): Prioritized agent skills and workflows.
 - [Improvement Roadmap](./improvement_roadmap.md): Prioritized development plan based on current code risks.
+- [Go Architecture](./go_architecture.md): Standalone single binary design, SQLite persistence, and PDF parsing engine.
+- [Client-Side PDF Generator](./pdf_generator.md): In-browser A4 report generation with @react-pdf/renderer and Thai font support.
 
 ## Source Materials
 - [llm-wiki.md](../llm-wiki.md) - The foundational pattern for this knowledge base.
